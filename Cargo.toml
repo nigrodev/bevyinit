@@ -1,0 +1,20 @@
+[package]
+name = "bevyinit"
+description = "An easy way to create projects with Bevy Engine"
+version = "0.1.0"
+edition = "2021"
+authors = ["Nigro <nigro.dev>"]
+repository = "https://github.com/nigrodev/bevyinit"
+license = "MIT"
+keywords = ["bevy", "project", "game", "gamedev", "creator"]
+categories = ["game-development"]
+exclude = ["repo/*"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+console = "0.15.8"
+dialoguer = {version = "0.11.0", default-features = false}
+ron = "0.8"
+rust-embed = "8.2.0"
+serde = { version = "1", features = ["derive"] }
