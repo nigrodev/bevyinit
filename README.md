@@ -33,7 +33,7 @@ You can check out the
 Because **bevyinit** is a more practical and faster way to create projects using Bevy with [recommended configuration options](https://bevyengine.org/learn/book/getting-started/setup/). It currently has few templates, but it's very easy to create new ones, just take a look at [Extras](#extras)
 
 ### Does it work with Linux or Mac?
-I've only tested it with Windows. It's meant to work with any OS that has cargo in the PATH.
+I've only tested it with Windows and Ubuntu WSL. It's meant to work with any OS that has cargo in the PATH.
 
 If an error occurs, please open an Issue on GitHub.
 
