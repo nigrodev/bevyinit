@@ -51,7 +51,10 @@ pub async fn get_templates(get_online : bool) -> Result<Vec<Template>, Box<dyn s
     }
 
     if get_online {
-        online::get_online(&mut templates).await?;
+        if online::get_online(&mut templates).await.is_err() {
+            println!("{} {}", console::style("[!]").red().bold(), console::style("The request for the online data went wrong. This is to be expected if you don't have internet access. Otherwise, please open an issue in the GitHub repository.").bold());
+            println!("{}\n", console::style("Only templates already saved locally or in the binary will be displayed.").bold());
+        }
     }
 
     Ok(templates)
