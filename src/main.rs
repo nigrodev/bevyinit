@@ -1,6 +1,7 @@
 use std::{io::Write, process::Command};
 use console::{style, Style};
 use dialoguer::{theme::ColorfulTheme, Confirm, Input, Select};
+use clap::{arg, Arg};
 
 mod templates;
 use templates::{get_selections, get_templates};
@@ -14,62 +15,150 @@ opt-level = 1
 [profile.dev.package."*"]
 opt-level = 3"#;
 
+fn cli() -> clap::Command {
+    clap::Command::new("Bevy Init")
+        .version(env!("CARGO_PKG_VERSION")) // Bump version here too
+        .author("nigro.dev")
+        .about("An easy way to set up a Bevy Engine project")
+        .subcommand(
+            clap::Command::new("create")
+                .about("Create a new project using Bevy with useful templates")
+                .subcommand(
+                    clap::Command::new("minimal")
+                    .short_flag('m')
+                    .long_flag("minimal")
+                    .about("Skip the options and templates to create a minimal project straight away")
+                )
+        )
+}
+
 #[tokio::main]
 async fn main() {
+
+    let matches = cli().get_matches();
 
     let grey = Style::new().color256(8); // https://www.ditig.com/publications/256-colors-cheat-sheet
 
     println!("\n{}\n", grey.apply_to(format!("bevy-init version {}", env!("CARGO_PKG_VERSION"))));
 
-    println!("Welcome to {}, rustaceans!", style("Bevy").bold());
+    println!("Welcome to {}, rustaceans!\n", style("Bevy").bold());
+
+    match matches.subcommand() {
+        Some(("create", query_matches)) => {
+            match query_matches.subcommand() {
+                Some(("minimal", _)) => {
+                    // 0 should be the first and minimal example
+                    // as seen in template "force_order: Some(0)"
+                    setup_project(Some(0)).await;
+                }
+                _ => {
+                    // Default behavior if no subcommand is provided
+                    setup_project(None).await;
+                }
+            }
+        }
+        _ => {
+            // Default behavior if no subcommand is provided
+            choose_mode().await;
+        }
+    }
+
+    // Since it has already been executed by the terminal, it doesn't need to wait for input or anything like that
+}
+
+async fn choose_mode() {
+    let items = vec!["Project Setup"];
+
+    let selection = Select::with_theme(&ColorfulTheme::default())
+        .with_prompt("What would you like to do with bevyinit?")
+        .items(&items)
+        .default(0)
+        .interact()
+        .unwrap();
+
+    print!("\n");
+
+    match selection {
+        0 => setup_project(None).await,
+        _ => unreachable!()
+    }
+}
+
+async fn setup_project(selected_theme : Option<usize>) {
+
+    let grey = Style::new().color256(8); // https://www.ditig.com/publications/256-colors-cheat-sheet
+
     println!("The project folder will be created in the current directory.\n");
 
     let templates = get_templates(true).await.expect("Error getting templates");
 
+    let template : &templates::Template;
+    let dynamic_link : bool;
+    let apply_optimization : bool;
+    let name : String;
+
     let selections = get_selections(&templates);
 
-    println!("{}", grey.apply_to("* Your starting template"));
+    if let Some(theme) = selected_theme {
 
-    let selection = Select::with_theme(&ColorfulTheme::default())
-        .with_prompt("Which Bevy template?")
-        .default(0)
-        .items(&selections[..])
+        template = &templates[theme];
+        dynamic_link = false;
+        apply_optimization = true;
+
+        println!("{}", grey.apply_to("* The name of your cargo project"));
+
+        // Duplicated name input
+        name = Input::with_theme(&ColorfulTheme::default())
+        .with_prompt("Your project name?")
+        .interact_text()
+        .unwrap();
+
+    } else {
+
+        println!("{}", grey.apply_to("* Your starting template"));
+
+        let selection = Select::with_theme(&ColorfulTheme::default())
+            .with_prompt("Which Bevy template?")
+            .default(0)
+            .items(&selections[..])
+            .interact()
+            .unwrap();
+
+        template = &templates[selection]; // The selected template
+
+        println!("{}", grey.apply_to("\n* The name of your cargo project"));
+
+        name = Input::with_theme(&ColorfulTheme::default())
+        .with_prompt("Your project name?")
+        .interact_text()
+        .unwrap();
+
+        println!("{}", grey.apply_to("\n* https://bevyengine.org/learn/book/getting-started/setup/#compile-with-performance-optimizations"));
+
+        apply_optimization =  Confirm::with_theme(&ColorfulTheme::default())
+        .with_prompt("Apply debug compile performance optimizations?")
+        .default(true)
         .interact()
         .unwrap();
 
-    let template = &templates[selection]; // The selected template
+        println!("{}", grey.apply_to("\n* You can still run Bevy with Dynamic Linking with 'cargo run --features bevy/dynamic_linking'"));
+        println!("{}", grey.apply_to("  https://bevyengine.org/learn/book/getting-started/setup/#advanced-optimize-your-compilation-times"));
+        
+        dynamic_link =  Confirm::with_theme(&ColorfulTheme::default())
+        .with_prompt("Permanently enable Bevy's Dynamic Linking Feature?")
+        .default(false)
+        .interact()
+        .unwrap();
 
-    println!("{}", grey.apply_to("\n* The name of your cargo project"));
+        // TODO: Find out a way to open Visual Studio Code with the project
+        // println!("{}", grey.apply_to("\n* Open your project folder in Visual Studio Code when ready"));
+        // let open_code =  Confirm::with_theme(&ColorfulTheme::default())
+        // .with_prompt("Open your project in VS Code when ready?")
+        // .default(true)
+        // .interact()
+        // .unwrap();
 
-    let name : String = Input::with_theme(&ColorfulTheme::default())
-    .with_prompt("Your project name?")
-    .interact_text()
-    .unwrap();
-
-    println!("{}", grey.apply_to("\n* https://bevyengine.org/learn/book/getting-started/setup/#compile-with-performance-optimizations"));
-
-    let apply_optimization =  Confirm::with_theme(&ColorfulTheme::default())
-    .with_prompt("Apply debug compile performance optimizations?")
-    .default(true)
-    .interact()
-    .unwrap();
-
-    println!("{}", grey.apply_to("\n* You can still run Bevy with Dynamic Linking with 'cargo run --features bevy/dynamic_linking'"));
-    println!("{}", grey.apply_to("  https://bevyengine.org/learn/book/getting-started/setup/#advanced-optimize-your-compilation-times"));
-    
-    let dynamic_link =  Confirm::with_theme(&ColorfulTheme::default())
-    .with_prompt("Permanently enable Bevy's Dynamic Linking Feature?")
-    .default(false)
-    .interact()
-    .unwrap();
-
-    // TODO: Find out a way to open Visual Studio Code with the project
-    // println!("{}", grey.apply_to("\n* Open your project folder in Visual Studio Code when ready"));
-    // let open_code =  Confirm::with_theme(&ColorfulTheme::default())
-    // .with_prompt("Open your project in VS Code when ready?")
-    // .default(true)
-    // .interact()
-    // .unwrap();
+    }
 
     print!("\n"); // Make a new line to the cargo "created binary" message
 
@@ -110,6 +199,4 @@ async fn main() {
     println!("\nThe Bevy app was created in {}", style(&name).bold());
     println!("Thanks for using {}!", style("Bevy").bold());
     println!("{} {} {}", grey.apply_to("If you have Visual Studio Code installed, use"), style(format!("code {}", &name)).white(), grey.apply_to("to open the folder"));
-
-    // Since it has already been executed by the terminal, it doesn't need to wait for input or anything like that
 }
