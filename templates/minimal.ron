@@ -1,10 +1,12 @@
 Template (
     beauty_name: "Minimal Bevy App",
     bevy_version: "0.12.1",
-    force_order: Some(0),
-    main_code: r#"use bevy::prelude::*;
+    force_order: Some(0)
+)
+
+--!code
+use bevy::prelude::*;
 
 fn main() {
     App::new().run();
-}"#
-)
+}

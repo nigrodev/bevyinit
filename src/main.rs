@@ -14,7 +14,8 @@ opt-level = 1
 [profile.dev.package."*"]
 opt-level = 3"#;
 
-fn main() {
+#[tokio::main]
+async fn main() {
 
     let grey = Style::new().color256(8); // https://www.ditig.com/publications/256-colors-cheat-sheet
 
@@ -23,7 +24,7 @@ fn main() {
     println!("Welcome to {}, rustaceans!", style("Bevy").bold());
     println!("The project folder will be created in the current directory.\n");
 
-    let templates = get_templates();
+    let templates = get_templates(true).await.expect("Error getting templates");
 
     let selections = get_selections(&templates);
 
@@ -88,7 +89,7 @@ fn main() {
     let cargo_toml = path.join("Cargo.toml");
 
     // Replace main.rs with the chosen template
-    std::fs::write(&main_rs, &template.main_code).unwrap();
+    std::fs::write(&main_rs, &template.main_code.clone().unwrap()).unwrap();
 
     // Append the configs to Cargo.toml
     let mut file = std::fs::OpenOptions::new()

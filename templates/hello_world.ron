@@ -1,8 +1,11 @@
 Template (
     beauty_name: "Hello World Example",
     bevy_version: "0.12.1",
-    force_order: None,
-    main_code: r#"use bevy::prelude::*;
+    force_order: None
+)
+
+--!code
+use bevy::prelude::*;
 
 fn main() {
     App::new()
@@ -13,5 +16,4 @@ fn main() {
 // This Bevy app should print "Hello world!" and close
 fn startup_system() {
     println!("Hello world!");
-}"#
-)
+}
