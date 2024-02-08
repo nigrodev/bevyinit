@@ -2,6 +2,7 @@
 
 **bevyinit** makes it easy to create a [Bevy Engine](https://bevyengine.org/) project with ready-to-use templates and useful options
 
+> If you're looking for the place where the online templates are located, take a look at [bevyinit_data](https://github.com/nigrodev/bevyinit_data).
 
 ## Usage
 Just install it and run `bevyinit` in your terminal
