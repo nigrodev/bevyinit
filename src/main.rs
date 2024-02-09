@@ -34,11 +34,15 @@ fn cli() -> clap::Command {
 #[tokio::main]
 async fn main() {
 
-    // When Ctrl-C is pressed, try to leave in a controlled manner
-    ctrlc::set_handler(|| {
-        let term = console::Term::stdout();
-        term.show_cursor().unwrap();
-        std::process::exit(0xc000013au32 as i32); // STATUS_CONTROL_C_EXIT
+    // https://github.com/console-rs/dialoguer/issues/294
+    // Ignore SIGINT so we can handle it ourselves
+    // On Linux, it ignores Ctrl+C and continues the program
+    // On Windows, it simply freezes
+    ctrlc::set_handler( || {
+        if cfg!(windows) {
+            console::Term::stdout().show_cursor().unwrap();
+            std::process::exit(0);
+        }
     }).expect("Error setting Ctrl-C handler");
 
     let matches = cli().get_matches();
@@ -55,24 +59,24 @@ async fn main() {
                 Some(("minimal", _)) => {
                     // 0 should be the first and minimal example
                     // as seen in template "force_order: Some(0)"
-                    setup_project(Some(0)).await;
+                    let _ = setup_project(Some(0)).await;
                 }
                 _ => {
                     // Default behavior if no subcommand is provided
-                    setup_project(None).await;
+                    let _ = setup_project(None).await;
                 }
             }
         }
         _ => {
             // Default behavior if no subcommand is provided
-            choose_mode().await;
+            let _ = choose_mode().await;
         }
     }
 
     // Since it has already been executed by the terminal, it doesn't need to wait for input or anything like that
 }
 
-async fn choose_mode() {
+async fn choose_mode() -> Result<(), dialoguer::Error> {
     let items = vec!["Project Setup"];
 
     let selection = Select::with_theme(&ColorfulTheme::default())
@@ -80,17 +84,22 @@ async fn choose_mode() {
         .items(&items)
         .default(0)
         .interact()
-        .unwrap();
+        .map_err(|e| {
+            let _ = console::Term::stdout().show_cursor();
+            e
+        })?;
 
     print!("\n");
 
-    match selection {
+    let _ = match selection {
         0 => setup_project(None).await,
         _ => unreachable!()
-    }
+    };
+
+    Ok(())
 }
 
-async fn setup_project(selected_theme : Option<usize>) {
+async fn setup_project(selected_theme : Option<usize>) -> Result<(), dialoguer::Error> {
 
     let grey = Style::new().color256(8); // https://www.ditig.com/publications/256-colors-cheat-sheet
 
@@ -117,7 +126,10 @@ async fn setup_project(selected_theme : Option<usize>) {
         name = Input::with_theme(&ColorfulTheme::default())
         .with_prompt("Your project name?")
         .interact_text()
-        .unwrap();
+        .map_err(|e| {
+            let _ = console::Term::stdout().show_cursor();
+            e
+        })?;
 
     } else {
 
@@ -128,7 +140,10 @@ async fn setup_project(selected_theme : Option<usize>) {
             .default(0)
             .items(&selections[..])
             .interact()
-            .unwrap();
+            .map_err(|e| {
+                let _ = console::Term::stdout().show_cursor();
+                e
+            })?;
 
         template = &templates[selection]; // The selected template
 
@@ -137,7 +152,10 @@ async fn setup_project(selected_theme : Option<usize>) {
         name = Input::with_theme(&ColorfulTheme::default())
         .with_prompt("Your project name?")
         .interact_text()
-        .unwrap();
+        .map_err(|e| {
+            let _ = console::Term::stdout().show_cursor();
+            e
+        })?;
 
         println!("{}", grey.apply_to("\n* https://bevyengine.org/learn/book/getting-started/setup/#compile-with-performance-optimizations"));
 
@@ -145,7 +163,10 @@ async fn setup_project(selected_theme : Option<usize>) {
         .with_prompt("Apply debug compile performance optimizations?")
         .default(true)
         .interact()
-        .unwrap();
+        .map_err(|e| {
+            let _ = console::Term::stdout().show_cursor();
+            e
+        })?;
 
         println!("{}", grey.apply_to("\n* You can still run Bevy with Dynamic Linking with 'cargo run --features bevy/dynamic_linking'"));
         println!("{}", grey.apply_to("  https://bevyengine.org/learn/book/getting-started/setup/#advanced-optimize-your-compilation-times"));
@@ -154,7 +175,10 @@ async fn setup_project(selected_theme : Option<usize>) {
         .with_prompt("Permanently enable Bevy's Dynamic Linking Feature?")
         .default(false)
         .interact()
-        .unwrap();
+        .map_err(|e| {
+            let _ = console::Term::stdout().show_cursor();
+            e
+        })?;
 
         // TODO: Find out a way to open Visual Studio Code with the project
         // println!("{}", grey.apply_to("\n* Open your project folder in Visual Studio Code when ready"));
@@ -205,4 +229,6 @@ async fn setup_project(selected_theme : Option<usize>) {
     println!("\nThe Bevy app was created in {}", style(&name).bold());
     println!("Thanks for using {}!", style("Bevy").bold());
     println!("{} {} {}", grey.apply_to("If you have Visual Studio Code installed, use"), style(format!("code {}", &name)).white(), grey.apply_to("to open the folder"));
+
+    Ok(())
 }
