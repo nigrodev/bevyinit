@@ -1,4 +1,5 @@
 use std::{io::Write, process::Command};
+use clap::ArgAction;
 use console::{style, Style};
 use dialoguer::{theme::ColorfulTheme, Confirm, Input, Select};
 
@@ -19,6 +20,13 @@ fn cli() -> clap::Command {
         .version(env!("CARGO_PKG_VERSION")) // Bump version here too
         .author("nigro.dev")
         .about("An easy way to set up a Bevy Engine project")
+        .arg(
+            clap::Arg::new("offline")
+                .short('o')
+                .long("offline")
+                .help("It doesn't look for new templates online and only shows embedded ones")
+                .action(ArgAction::SetTrue),
+        )
         .subcommand(
             clap::Command::new("create")
                 .about("Create a new project using Bevy with useful templates")
@@ -38,6 +46,7 @@ async fn main() {
     // Ignore SIGINT so we can handle it ourselves
     // On Linux, it ignores Ctrl+C and continues the program
     // On Windows, it simply freezes
+    // I don't know what happens on macOS, please open an issue if something related happened to you
     ctrlc::set_handler( || {
         if cfg!(windows) {
             console::Term::stdout().show_cursor().unwrap();
@@ -53,30 +62,32 @@ async fn main() {
 
     println!("Welcome to {}, rustaceans!\n", style("Bevy").bold());
 
+    let offline_mode : &bool = matches.get_one("offline").unwrap_or(&false);
+
     match matches.subcommand() {
         Some(("create", query_matches)) => {
             match query_matches.subcommand() {
                 Some(("minimal", _)) => {
                     // 0 should be the first and minimal example
                     // as seen in template "force_order: Some(0)"
-                    let _ = setup_project(Some(0)).await;
+                    let _ = setup_project(Some(0), offline_mode).await;
                 }
                 _ => {
                     // Default behavior if no subcommand is provided
-                    let _ = setup_project(None).await;
+                    let _ = setup_project(None, offline_mode).await;
                 }
             }
         }
         _ => {
             // Default behavior if no subcommand is provided
-            let _ = choose_mode().await;
+            let _ = choose_mode(offline_mode).await;
         }
     }
 
     // Since it has already been executed by the terminal, it doesn't need to wait for input or anything like that
 }
 
-async fn choose_mode() -> Result<(), dialoguer::Error> {
+async fn choose_mode(offline_mode : &bool) -> Result<(), dialoguer::Error> {
     let items = vec!["Project Setup"];
 
     let selection = Select::with_theme(&ColorfulTheme::default())
@@ -92,20 +103,20 @@ async fn choose_mode() -> Result<(), dialoguer::Error> {
     print!("\n");
 
     let _ = match selection {
-        0 => setup_project(None).await,
+        0 => setup_project(None, offline_mode).await,
         _ => unreachable!()
     };
 
     Ok(())
 }
 
-async fn setup_project(selected_theme : Option<usize>) -> Result<(), dialoguer::Error> {
+async fn setup_project(selected_theme : Option<usize>, offline_mode : &bool) -> Result<(), dialoguer::Error> {
 
     let grey = Style::new().color256(8); // https://www.ditig.com/publications/256-colors-cheat-sheet
 
     println!("The project folder will be created in the current directory.\n");
 
-    let templates = get_templates(true).await.expect("Error getting templates");
+    let templates = get_templates(!offline_mode).await.expect("Error getting templates");
 
     let template : &templates::Template;
     let dynamic_link : bool;
