@@ -9,6 +9,10 @@ Just install it and run `bevyinit` in your terminal
 
 ![example](repo/example.gif)
 
+- Use `bevyinit create -m` to create a quick project without worrying about the options (they will be set to default)
+- Use `bevyinit` with `--offline` or `-o` to not search for templates online
+- Use `bevyinit help` to see other available commands
+
 ## Installation
 
 #### [cargo-binstall](https://crates.io/crates/cargo-binstall)
