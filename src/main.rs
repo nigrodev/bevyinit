@@ -34,6 +34,13 @@ fn cli() -> clap::Command {
 #[tokio::main]
 async fn main() {
 
+    // When Ctrl-C is pressed, try to leave in a controlled manner
+    ctrlc::set_handler(|| {
+        let term = console::Term::stdout();
+        term.show_cursor().unwrap();
+        std::process::exit(0xc000013au32 as i32); // STATUS_CONTROL_C_EXIT
+    }).expect("Error setting Ctrl-C handler");
+
     let matches = cli().get_matches();
 
     let grey = Style::new().color256(8); // https://www.ditig.com/publications/256-colors-cheat-sheet
