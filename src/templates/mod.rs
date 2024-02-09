@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use rust_embed::RustEmbed;
 use serde::{Deserialize, Serialize};
 
@@ -13,6 +15,7 @@ pub struct Template {
     pub bevy_version : String,
     pub main_code : String,
     from_online_data : bool,
+    pub extra_crates : HashMap<String, String>,
 }
 
 #[derive(RustEmbed)]

@@ -233,6 +233,10 @@ async fn setup_project(selected_theme : Option<usize>, offline_mode : &bool) -> 
         file.write_all(format!("bevy = \"{}\"", template.bevy_version).as_bytes()).unwrap();
     }
 
+    for crate_ in &template.extra_crates {
+        file.write_all(format!("\n{} = \"{}\"", crate_.0, crate_.1).as_bytes()).unwrap();
+    }
+
     if apply_optimization {
         file.write_all(format!("\n\n{}", CARGO_OPTIMIZATION).as_bytes()).unwrap();
     }

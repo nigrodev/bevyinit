@@ -1,7 +1,8 @@
 TemplateFile (
     beauty_name: "Minimal Bevy App",
     bevy_version: "0.12.1",
-    force_order: Some(0)
+    force_order: Some(0),
+    extra_crates: {}
 )
 
 --!code

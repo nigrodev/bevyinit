@@ -1,7 +1,11 @@
 TemplateFile (
     beauty_name: "Hello World Example",
     bevy_version: "0.12.1",
-    force_order: None
+    force_order: None,
+    extra_crates: {
+        "test1": "0.0.1",
+        "test31": "0.03.1",
+    }
 )
 
 --!code

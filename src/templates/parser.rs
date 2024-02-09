@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::Deserialize;
 use super::Template;
 
@@ -6,6 +8,7 @@ struct TemplateFile {
     beauty_name: String,
     force_order: Option<usize>,
     pub bevy_version: String,
+    extra_crates : HashMap<String, String>,
 }
 
 pub fn parse_template(raw : String, from_online_data : bool) -> Template {
@@ -38,6 +41,7 @@ pub fn parse_template(raw : String, from_online_data : bool) -> Template {
         force_order: template.force_order,
         bevy_version: template.bevy_version,
         main_code: below_code,
-        from_online_data
+        from_online_data,
+        extra_crates: template.extra_crates
     }
 }
