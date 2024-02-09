@@ -1,6 +1,14 @@
+use serde::Deserialize;
 use super::Template;
 
-pub fn parse_template(raw : String) -> Template {
+#[derive(Deserialize)]
+struct TemplateFile {
+    beauty_name: String,
+    force_order: Option<usize>,
+    pub bevy_version: String,
+}
+
+pub fn parse_template(raw : String, from_online_data : bool) -> Template {
     // Find the position of "--!code" in the file
     let mut above_code = String::new();
     let mut below_code = String::new();
@@ -23,9 +31,13 @@ pub fn parse_template(raw : String) -> Template {
     // Remove all extra space
     below_code = below_code.trim().to_string();
 
-    let mut template : Template = ron::from_str(above_code.trim()).expect("Failed to parse ron template");
+    let template : TemplateFile = ron::from_str(above_code.trim()).expect("Failed to parse ron template");
 
-    template.main_code = Some(below_code);
-
-    template
+    Template {
+        beauty_name: template.beauty_name,
+        force_order: template.force_order,
+        bevy_version: template.bevy_version,
+        main_code: below_code,
+        from_online_data
+    }
 }

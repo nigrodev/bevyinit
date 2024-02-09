@@ -1,7 +1,6 @@
 use std::{io::Write, process::Command};
 use console::{style, Style};
 use dialoguer::{theme::ColorfulTheme, Confirm, Input, Select};
-use clap::{arg, Arg};
 
 mod templates;
 use templates::{get_selections, get_templates};
@@ -178,7 +177,7 @@ async fn setup_project(selected_theme : Option<usize>) {
     let cargo_toml = path.join("Cargo.toml");
 
     // Replace main.rs with the chosen template
-    std::fs::write(&main_rs, &template.main_code.clone().unwrap()).unwrap();
+    std::fs::write(&main_rs, &template.main_code).unwrap();
 
     // Append the configs to Cargo.toml
     let mut file = std::fs::OpenOptions::new()

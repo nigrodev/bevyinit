@@ -47,10 +47,7 @@ pub async fn get_online(templates : &mut Vec<Template>) -> Result<(), Box<dyn st
            .text()
            .await?;
 
-       let mut template = parse_template(resp);
-
-       template.from_online_data = Some(true);
-
+       let template = parse_template(resp, true);
        templates.push(template);
    }
 
